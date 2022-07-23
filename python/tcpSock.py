@@ -1,7 +1,7 @@
 #/usr/bin/env python
 import struct, socket
 
-class TcpSock():
+class TcpSock:
     sock = None
 
     def __init__(self, sock):
@@ -10,7 +10,7 @@ class TcpSock():
     def __del__(self):
         self.sock.close()
 
-    
+    #return received num
     def recvNum(self):
         num = None
         try:
@@ -22,6 +22,7 @@ class TcpSock():
             return None
         return num
 
+    #return received string
     def recvString(self):
         payload = self.recvNum()
         if payload is None:
@@ -36,7 +37,7 @@ class TcpSock():
             return None
         return msg
 
-
+    #return True or False
     def sendNum(self, num):
         buf = struct.pack('>l', num)
         try:
@@ -47,6 +48,7 @@ class TcpSock():
             return False
         return True
 
+    #return True or False
     def sendString(self, msg):
         payload = len(msg)
         if not self.sendNum(payload):
@@ -60,3 +62,8 @@ class TcpSock():
             return False
         return True
     
+    def closeSock(self):
+        try:
+            self.sock.close()
+        except ... as e:
+            print(e)

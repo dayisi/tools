@@ -1,13 +1,12 @@
 #!/usr/bin/env python
-from asyncio.streams import _ClientConnectedCallback
 from tcpSock import TcpSock
 import socket
 
 class TcpServer:
     sock = None
     connectedClients = []
-    host = '127.0.0.1'
-    port = 4009
+    host = None
+    port = None
     maxNum = 0
 
     def __init__(self, host = '127.0.0.1', port=4009):
@@ -15,7 +14,18 @@ class TcpServer:
         self.port = port
         self.sock = socket.socket()
         self.sock.bind((host, port))
+    
+    def __del__(self):
+        for client in self.connectedClients:
+            try:
+                self.connectedClients.remove(client)
+                del client
+            except ... as e:
+                print(e)
+        self.sock.close()
 
+                
+    # return true or false
     def filterClients(self):
         for client in self.connectedClients:
             try:
@@ -27,18 +37,20 @@ class TcpServer:
         return len(self.connectedClients) < self.maxNum
 
 
-    def waitForClients(self, maxNum):
+    def waitForClients(self, maxNum=1):
         self.maxNum = maxNum
         self.sock.listen(maxNum)
+        print('listening...')
         while len(self.connectedClients) <= maxNum:
-            clientSock, addr = self.sock.accept()
             if len(self.connectedClients) == maxNum:
-                if self.filterClients():
-                    self.connectedClients.append(TcpSock(clientSock))
+                print('connected clients reach limit, filter disconnected client first!')
+                if not self.filterClients():
+                    break
+            clientSock, addr = self.sock.accept()
+            print('one client connected')
+            self.connectedClients.append(TcpSock(clientSock))
     
-    '''
-        @param index: 
-    '''
+    # return true or false
     def sendNum(self, num, index = -99):
         res = True
         if index == -99:
@@ -55,6 +67,7 @@ class TcpServer:
                 res = False
         return res
     
+    # return true or false
     def sendString(self, msg, index = -99):
         res = True
         if index == -99:
@@ -71,7 +84,8 @@ class TcpServer:
                 res = False
         return res
 
-    def recvNum(self, index):
+    # return received num
+    def recvNum(self, index=0):
         try:
             return self.connectedClients[index].recvNum()
         except ValueError.error as e:
@@ -79,10 +93,31 @@ class TcpServer:
             print(e)
         return None
 
-    def recvString(self, index):
+    # return received string
+    def recvString(self, index=0):
         try:
             return self.connectedClients[index].recvString()
         except ValueError.error as e:
             print('failed to receive string')
             print(e)
         return None
+
+'''
+def main():
+    server = TcpServer()
+    server.waitForClients(1)
+    print('client connected')
+    if server.sendString('hello, client'):
+        msg = server.recvString()
+        if not msg is None:
+            print(msg)
+    if server.sendNum(1):
+        num = server.recvNum()
+        if not num is None:
+            print(num)
+    del server
+    return True
+
+if __name__ == '__main__':
+    main()
+'''
